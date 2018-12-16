@@ -208,6 +208,7 @@ class PhotoView extends StatefulWidget {
 
 class _PhotoViewState extends State<PhotoView>
     with AfterLayoutMixin<PhotoView> {
+  Orientation _orientation;
   PhotoViewScaleState _scaleState;
   Size _size;
   Size _childSize;
@@ -249,6 +250,22 @@ class _PhotoViewState extends State<PhotoView>
         : null;
   }
 
+  void resetScaleState() {
+    final Orientation orientation = MediaQuery.of(context).orientation;
+    if(_orientation != orientation) {
+      _orientation = orientation;
+
+      Future.delayed(const Duration(milliseconds: 10), () {
+        setState(() {
+          _size = context.size;
+        });
+        widget.scaleStateChangedCallback != null
+            ? widget.scaleStateChangedCallback(PhotoViewScaleState.initial)
+            : null;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -277,6 +294,7 @@ class _PhotoViewState extends State<PhotoView>
   }
 
   Widget _buildCustomChild(BuildContext context) {
+    resetScaleState();
     return PhotoViewImageWrapper.customChild(
       customChild: widget.child,
       setNextScaleState: setNextScaleState,
@@ -323,6 +341,7 @@ class _PhotoViewState extends State<PhotoView>
   }
 
   Widget _buildWrapperImage(BuildContext context) {
+    resetScaleState();
     return PhotoViewImageWrapper(
       setNextScaleState: setNextScaleState,
       onStartPanning: onStartPanning,
