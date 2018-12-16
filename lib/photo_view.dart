@@ -254,6 +254,7 @@ class _PhotoViewState extends State<PhotoView>
     final Orientation orientation = MediaQuery.of(context).orientation;
     if(_orientation != orientation) {
       _orientation = orientation;
+      _size = context.size;
       /*_scaleState = PhotoViewScaleState.initial;
 
       Future.delayed(const Duration(milliseconds: 10), () {
