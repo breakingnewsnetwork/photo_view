@@ -104,6 +104,7 @@ typedef PhotoViewScaleStateChangedCallback = void Function(
 /// ```
 ///
 class PhotoView extends StatefulWidget {
+
   /// Creates a widget that displays a zoomable image.
   ///
   /// To show an image from the network or from an asset bundle, use their respective
@@ -123,6 +124,7 @@ class PhotoView extends StatefulWidget {
     this.heroTag,
     this.scaleStateChangedCallback,
     this.enableRotation = false,
+    this.transitionOnUserGestures = false,
   })  : child = null,
         childSize = null,
         super(key: key);
@@ -145,6 +147,7 @@ class PhotoView extends StatefulWidget {
     this.heroTag,
     this.scaleStateChangedCallback,
     this.enableRotation = false,
+    this.transitionOnUserGestures = false,
   })  : loadingChild = null,
         imageProvider = null,
         gaplessPlayback = false,
@@ -200,6 +203,11 @@ class PhotoView extends StatefulWidget {
   /// The size of the custom [child]. [PhotoView] uses this value to compute the relation between the child and the container's size to calculate the scale value.
   final Size childSize;
 
+  /// The value specified to homonimous option givento to [Hero]. Sets [Hero.transitionOnUserGestures] in teh internal hero.
+  ///
+  /// Should only be set when [PhotoView.heroTag] is set
+  final bool transitionOnUserGestures;
+
   @override
   State<StatefulWidget> createState() {
     return _PhotoViewState();
@@ -216,13 +224,15 @@ class _PhotoViewState extends State<PhotoView>
   Future<ImageInfo> _getImage() {
     final Completer completer = Completer<ImageInfo>();
     final ImageStream stream =
-        widget.imageProvider.resolve(const ImageConfiguration());
+    widget.imageProvider.resolve(const ImageConfiguration());
     final listener = (ImageInfo info, bool synchronousCall) {
       if (!completer.isCompleted) {
         completer.complete(info);
-        setState(() {
-          _childSize = Size(info.image.width / 1, info.image.height / 1);
-        });
+        if (mounted) {
+          setState(() {
+            _childSize = Size(info.image.width / 1, info.image.height / 1);
+          });
+        }
       }
     };
     stream.addListener(listener);
@@ -283,9 +293,11 @@ class _PhotoViewState extends State<PhotoView>
 
   @override
   void afterFirstLayout(BuildContext context) {
-    setState(() {
-      _size = context.size;
-    });
+    if (mounted) {
+      setState(() {
+        _size = context.size;
+      });
+    }
   }
 
   @override
@@ -362,6 +374,7 @@ class _PhotoViewState extends State<PhotoView>
         size: _computedSize,
       ),
       heroTag: widget.heroTag,
+      transitionOnUserGestures: widget.transitionOnUserGestures,
     );
   }
 
@@ -369,44 +382,14 @@ class _PhotoViewState extends State<PhotoView>
     return widget.loadingChild != null
         ? widget.loadingChild
         : Center(
-            child: Container(
-              width: 20.0,
-              height: 20.0,
-              child: const CircularProgressIndicator(),
-            ),
-          );
+      child: Container(
+        width: 20.0,
+        height: 20.0,
+        child: const CircularProgressIndicator(),
+      ),
+    );
   }
 
   Size get _computedSize =>
       widget.customSize ?? _size ?? MediaQuery.of(context).size;
-}
-
-/// Deprecated, use [PhotoView] instead
-///
-@Deprecated("Use PhotoView instead")
-class PhotoViewInline extends PhotoView {
-  const PhotoViewInline({
-    Key key,
-    @required ImageProvider imageProvider,
-    Widget loadingChild,
-    Decoration backgroundDecoration,
-    dynamic minScale,
-    dynamic maxScale,
-    dynamic initialScale,
-    bool gaplessPlayback,
-    Size size,
-    Object heroTag,
-    PhotoViewScaleStateChangedCallback scaleStateChangedCallback,
-  }) : super(
-            key: key,
-            imageProvider: imageProvider,
-            loadingChild: loadingChild,
-            backgroundDecoration: backgroundDecoration,
-            minScale: minScale,
-            maxScale: maxScale,
-            initialScale: initialScale,
-            gaplessPlayback: gaplessPlayback,
-            customSize: size,
-            heroTag: heroTag,
-            scaleStateChangedCallback: scaleStateChangedCallback);
 }
